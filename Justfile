@@ -49,3 +49,9 @@ fmt:
 [group('code quality')]
 typecheck:
     uv run ty check
+
+[group('release')]
+release tag:
+    git tag {{tag}}
+    git push origin {{tag}}
+    gh release create {{tag}} --generate-notes
