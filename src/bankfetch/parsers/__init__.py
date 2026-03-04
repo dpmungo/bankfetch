@@ -1,7 +1,11 @@
+import importlib
+import importlib.util
+import os
+import pkgutil
+import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-import importlib
-import pkgutil
+from pathlib import Path
 
 _REGISTRY: dict[str, type["BaseParser"]] = {}
 
@@ -47,7 +51,20 @@ class BaseParser(ABC):
         ...
 
 
-# Auto-discover and import all modules in this package so their
-# @register decorators fire — no manual imports needed when adding a new parser.
+# Built-in parsers in this package.
 for _mod_info in pkgutil.iter_modules(__path__):
     importlib.import_module(f"{__name__}.{_mod_info.name}")
+
+# User parsers: drop a .py file in ~/.config/bankfetch/parsers/ (or $BANKFETCH_PARSERS_DIR).
+_plugin_dir = Path(
+    os.environ.get(
+        "BANKFETCH_PARSERS_DIR", Path.home() / ".config" / "bankfetch" / "parsers"
+    )
+)
+if _plugin_dir.is_dir():
+    for _plugin_file in sorted(_plugin_dir.glob("*.py")):
+        _spec = importlib.util.spec_from_file_location(_plugin_file.stem, _plugin_file)
+        if _spec and _spec.loader:
+            _mod = importlib.util.module_from_spec(_spec)
+            sys.modules[_plugin_file.stem] = _mod
+            _spec.loader.exec_module(_mod)

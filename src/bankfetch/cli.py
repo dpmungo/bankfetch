@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Annotated
 
 import typer
@@ -14,6 +15,33 @@ app = typer.Typer(
     help="Download your bank account transactions via the Enable Banking API.",
     no_args_is_help=True,
 )
+
+_ENV_TEMPLATE = """\
+EB_APP_ID=<your-app-uuid>
+EB_PRIVATE_KEY_PATH=<path-to-key.pem>
+EB_REDIRECT_URL=https://localhost/auth_redirect
+EB_SESSION_FILE=.session.json
+EB_ACCESS_DAYS=30
+"""
+
+
+@app.command()
+def init() -> None:
+    """Create a .env template in the current directory."""
+    env_file = Path(".env")
+    if env_file.exists():
+        typer.echo(".env already exists. Remove it first if you want to reset it.")
+        raise typer.Exit(1)
+    env_file.write_text(_ENV_TEMPLATE)
+    env_file.chmod(0o600)
+    typer.echo("Created .env — open it and fill in EB_APP_ID and EB_PRIVATE_KEY_PATH.")
+
+
+@app.command()
+def parsers() -> None:
+    """List available transaction parsers."""
+    for name in list_parsers():
+        typer.echo(name)
 
 
 @app.command()
