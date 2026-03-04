@@ -4,7 +4,7 @@ dynamic = ["version"]
 description = "Download your own bank accounts transactions via the Enable Banking API"
 readme = "README.md"
 requires-python = ">=3.13"
-license = { file = "LICENSE" }
+license = "PolyForm-Noncommercial-1.0.0"
 authors = [{ name = "Davide Mungo", email = "dp.mungo@gmail.com" }]
 keywords = [
     "banking", "transactions", "enable-banking", "open-banking",
