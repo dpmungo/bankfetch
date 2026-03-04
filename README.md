@@ -1,5 +1,10 @@
 # BankFetch, download your own transactions via Enable Banking API
 
+[![PyPI version](https://img.shields.io/pypi/v/bankfetch)](https://pypi.org/project/bankfetch/)
+[![Python](https://img.shields.io/pypi/pyversions/bankfetch)](https://pypi.org/project/bankfetch/)
+[![Release](https://github.com/dpmungo/bankfetch/actions/workflows/release.yml/badge.svg)](https://github.com/dpmungo/bankfetch/actions/workflows/release.yml)
+[![License](https://img.shields.io/github/license/dpmungo/bankfetch)](LICENSE)
+
 This is a hopefully simple CLI tool that fetches bank account transactions via [Enable Banking](https://enablebanking.com) and exports them to CSV. Enable Banking acts as the licensed AISP intermediary, so you don't need an eIDAS certificate or TPP registration of your own.
 
 Built primarily for accessing transactions in my Banca Mediolanum account, but you can implement your own parser to support other banks in a hopefully straightforward way.
