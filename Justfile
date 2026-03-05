@@ -6,9 +6,10 @@ default:
     just --list --unsorted
 
 # Authenticate with the bank (opens browser, stores session)
+[positional-arguments]
 [group('app')]
-auth:
-    uv run bankfetch auth
+auth *args:
+    uv run bankfetch auth "$@"
 
 # Fetch transactions to CSV  (e.g. `just fetch --from 2024-01-01`)
 [group('app')]

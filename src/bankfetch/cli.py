@@ -22,6 +22,9 @@ EB_PRIVATE_KEY_PATH=<path-to-key.pem>
 EB_REDIRECT_URL=https://localhost/auth_redirect
 EB_SESSION_FILE=.session.json
 EB_ACCESS_DAYS=30
+# Bank to connect to — run `bankfetch aspsps` for available names and country codes.
+EB_ASPSP_NAME=<bank-name>
+EB_ASPSP_COUNTRY=<two-letter-country-code>
 """
 
 
@@ -45,9 +48,63 @@ def parsers() -> None:
 
 
 @app.command()
-def auth() -> None:
+def aspsps(
+    country: Annotated[
+        str | None,
+        typer.Option(
+            "--country",
+            "-c",
+            metavar="CC",
+            help="Filter by two-letter country code (e.g. IT, DE, FI).",
+        ),
+    ] = None,
+) -> None:
+    """List banks available via Enable Banking."""
+    config = Config.from_env()
+    client = EnableBankingClient(config)
+    results = client.get_aspsps(country=country)
+    if not results:
+        typer.echo("No banks found.")
+        return
+    for aspsp in sorted(results, key=lambda a: (a["country"], a["name"])):
+        typer.echo(f"{aspsp['country']}  {aspsp['name']}")
+
+
+@app.command()
+def auth(
+    bank: Annotated[
+        str | None,
+        typer.Option(
+            "--bank",
+            "-b",
+            metavar="NAME",
+            help="Bank name (overrides EB_ASPSP_NAME). Run 'bankfetch aspsps' to list options.",
+        ),
+    ] = None,
+    country: Annotated[
+        str | None,
+        typer.Option(
+            "--country",
+            "-c",
+            metavar="CC",
+            help="Two-letter country code (overrides EB_ASPSP_COUNTRY, e.g. IT).",
+        ),
+    ] = None,
+) -> None:
     """Authenticate with the bank and save the session locally."""
     config = Config.from_env()
+    if bank:
+        config.aspsp_name = bank
+    if country:
+        config.aspsp_country = country.upper()
+    if not (config.aspsp_name and config.aspsp_country):
+        logger.error(
+            "Bank name and country are required. "
+            "Set EB_ASPSP_NAME and EB_ASPSP_COUNTRY in your .env file, "
+            "or pass --bank and --country. "
+            "Run 'bankfetch aspsps' to list available banks."
+        )
+        raise typer.Exit(1)
     auth_client = AuthClient(config)
     auth_client.store.clear()
     auth_client.login()

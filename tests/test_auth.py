@@ -1,7 +1,8 @@
 """Tests for bankfetch.auth (SessionStore, make_jwt, AuthClient)."""
 
+import pytest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import jwt
 
@@ -137,3 +138,41 @@ class TestAuthClientGetValidSession:
                 auth.get_valid_session()
 
         mock_login.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# AuthClient._start_auth — aspsp field is optional
+# ---------------------------------------------------------------------------
+
+
+class TestStartAuth:
+    def _mock_post(self, url: str, state: str) -> MagicMock:
+        """Return a mock that simulates a successful POST /auth response."""
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"url": url}
+        mock_resp.raise_for_status.return_value = None
+        return mock_resp
+
+    def test_aspsp_included_when_configured(self, config: Config):
+        config.aspsp_name = "Banca Mediolanum"
+        config.aspsp_country = "IT"
+        auth = AuthClient(config)
+
+        with patch("bankfetch.auth.requests.post") as mock_post:
+            mock_post.return_value = self._mock_post("https://bank.example/login", "s")
+            with patch.object(auth, "_headers", return_value={}):
+                auth._start_auth()
+
+        body = mock_post.call_args.kwargs["json"]
+        assert body["aspsp"] == {"name": "Banca Mediolanum", "country": "IT"}
+
+    def test_aspsp_omitted_when_not_configured(self, config: Config):
+        # aspsp_name=None, aspsp_country=None → ValueError before any HTTP call
+        auth = AuthClient(config)
+
+        with patch("bankfetch.auth.requests.post") as mock_post:
+            with patch.object(auth, "_headers", return_value={}):
+                with pytest.raises(ValueError, match="aspsp_name"):
+                    auth._start_auth()
+
+        mock_post.assert_not_called()

@@ -19,6 +19,20 @@ class EnableBankingClient:
     def _headers(self) -> dict:
         return {"Authorization": f"Bearer {make_jwt(self._key, self.config.app_id)}"}
 
+    def get_aspsps(self, country: str | None = None) -> list[dict]:
+        """Return the list of available ASPSPs, optionally filtered by country code."""
+        params = {}
+        if country:
+            params["country"] = country.upper()
+        resp = requests.get(
+            f"{API_BASE}/aspsps",
+            params=params,
+            headers=self._headers(),
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return resp.json().get("aspsps", [])
+
     def get_accounts(self, account_uids: list[str]) -> list[dict]:
         """
         Fetch account details for each UID returned in the session.

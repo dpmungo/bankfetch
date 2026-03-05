@@ -36,6 +36,8 @@ class Config:
     redirect_url: str  # Must match what's registered in the Control Panel
     session_file: str  # Local file to persist session_id + account UIDs
     access_days: int = 30  # How many days ahead the bank access grant is valid
+    aspsp_name: str | None = None  # Bank name, e.g. "Banca Mediolanum" (required for auth)
+    aspsp_country: str | None = None  # Two-letter ISO country code, e.g. "IT" (required for auth)
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -51,6 +53,8 @@ class Config:
             ),
             session_file=os.environ.get("EB_SESSION_FILE", ".session.json"),
             access_days=int(os.environ.get("EB_ACCESS_DAYS", "30")),
+            aspsp_name=os.environ.get("EB_ASPSP_NAME") or None,
+            aspsp_country=os.environ.get("EB_ASPSP_COUNTRY") or None,
         )
 
     def read_private_key(self) -> bytes:

@@ -158,10 +158,13 @@ class AuthClient:
         state = str(uuid.uuid4())
         valid_until = (
             datetime.now(timezone.utc) + timedelta(days=self.config.access_days)
-        ).isoformat()
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
         body = {
             "access": {"valid_until": valid_until},
-            "aspsp": {"name": "Banca Mediolanum", "country": "IT"},
+            "aspsp": {
+                "name": self.config.aspsp_name,
+                "country": self.config.aspsp_country,
+            },
             "state": state,
             "redirect_url": self.config.redirect_url,
             "psu_type": "personal",
@@ -169,6 +172,8 @@ class AuthClient:
         resp = requests.post(
             f"{API_BASE}/auth", json=body, headers=self._headers(), timeout=30
         )
+        if not resp.ok:
+            logger.error("POST /auth failed ({}): {}", resp.status_code, resp.text)
         resp.raise_for_status()
         data = resp.json()
         return data["url"], state
@@ -181,6 +186,8 @@ class AuthClient:
             headers=self._headers(),
             timeout=30,
         )
+        if not resp.ok:
+            logger.error("POST /sessions failed ({}): {}", resp.status_code, resp.text)
         resp.raise_for_status()
         return resp.json()
 
